@@ -689,7 +689,9 @@ Track::use_copy_playlist ()
 
 	playlist->reset_shares();
 
-	return use_playlist (data_type(), playlist);
+	int rv = use_playlist (data_type(), playlist);
+	PlaylistAdded (); /* EMIT SIGNAL */
+	return rv;
 }
 
 int
@@ -710,7 +712,9 @@ Track::use_new_playlist (DataType dt)
 		return -1;
 	}
 
-	return use_playlist (dt, playlist);
+	int rv = use_playlist (dt, playlist);
+	PlaylistAdded (); /* EMIT SIGNAL */
+	return rv;
 }
 
 void

@@ -170,6 +170,7 @@ public:
 
 	PBD::Signal0<void> FreezeChange;
 	PBD::Signal0<void> PlaylistChanged;
+	PBD::Signal0<void> PlaylistAdded;
 	PBD::Signal0<void> SpeedChanged;
 	PBD::Signal0<void> AlignmentStyleChanged;
 	PBD::Signal0<void> ChanCountChanged;

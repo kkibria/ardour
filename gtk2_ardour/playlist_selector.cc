@@ -87,6 +87,13 @@ void PlaylistSelector::set_rui(RouteUI* ruix)
 			boost::bind(&PlaylistSelector::playlist_added, this),
 			gui_context()
 		);
+
+		this_track->DropReferences.connect(
+			signal_connections,
+			invalidator(*this),
+			boost::bind(&PlaylistSelector::ok_button_click, this),
+			gui_context()
+		);
 	}
 }
 

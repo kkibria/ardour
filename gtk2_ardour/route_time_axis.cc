@@ -1696,7 +1696,8 @@ RouteTimeAxisView::update_playlist_tip ()
 void
 RouteTimeAxisView::show_playlist_selector ()
 {
-	_editor.playlist_selector().show_for (this);
+	_editor.playlist_selector().set_rui(this);
+	_editor.playlist_selector().show();
 }
 
 void

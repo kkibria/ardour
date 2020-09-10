@@ -47,7 +47,7 @@ public:
 	PlaylistSelector ();
 	~PlaylistSelector ();
 
-	void show();
+	void redisplay();
 	void set_rui(RouteUI*);
 
 protected:

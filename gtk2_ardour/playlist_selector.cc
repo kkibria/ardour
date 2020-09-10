@@ -115,7 +115,7 @@ PlaylistSelector::on_unmap_event (GdkEventAny* ev)
 }
 
 void
-PlaylistSelector::show()
+PlaylistSelector::redisplay()
 {
 	vector<const char*> item;
 	string str;
@@ -264,7 +264,7 @@ PlaylistSelector::add_playlist_to_map (boost::shared_ptr<Playlist> pl)
 void
 PlaylistSelector::playlist_added()
 {
-	show();
+	redisplay();
 }
 
 void

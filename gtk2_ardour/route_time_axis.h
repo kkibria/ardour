@@ -231,8 +231,13 @@ protected:
 	void set_align_choice (Gtk::RadioMenuItem*, ARDOUR::AlignChoice, bool apply_to_selection = false);
 
 	bool         playlist_click (GdkEventButton *);
-	void         show_playlist_selector ();
 	void         playlist_changed ();
+
+	void         show_playlist_selector ();
+	void         show_playlist_copy_selector ();
+	void         show_playlist_share_selector ();
+	void         show_playlist_steal_selector ();
+
 
 	void rename_current_playlist ();
 

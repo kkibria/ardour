@@ -1573,6 +1573,9 @@ RouteTimeAxisView::build_playlist_menu ()
 	}
 
 	playlist_items.push_back (SeparatorElem());
+	playlist_items.push_back (MenuElem(_("Select ..."), sigc::mem_fun(*this, &RouteTimeAxisView::show_playlist_selector)));
+
+	playlist_items.push_back (SeparatorElem());
 	playlist_items.push_back (MenuElem (_("Rename..."), sigc::mem_fun(*this, &RouteTimeAxisView::rename_current_playlist)));
 	playlist_items.push_back (SeparatorElem());
 
@@ -1591,7 +1594,12 @@ RouteTimeAxisView::build_playlist_menu ()
 	playlist_items.push_back (MenuElem (_("Clear Current"), sigc::bind(sigc::mem_fun(_editor, &PublicEditor::clear_playlists), this)));
 	playlist_items.push_back (SeparatorElem());
 
-	playlist_items.push_back (MenuElem(_("Select from All..."), sigc::mem_fun(*this, &RouteTimeAxisView::show_playlist_selector)));
+	Menu* advanced_menu = manage (new Menu);
+	MenuList& advanced_items = advanced_menu->items();
+	advanced_items.push_back (MenuElem(_("Copy from ..."), sigc::mem_fun(*this, &RouteTimeAxisView::show_playlist_copy_selector)));
+	advanced_items.push_back (MenuElem(_("Share with ..."), sigc::mem_fun(*this, &RouteTimeAxisView::show_playlist_share_selector)));
+	advanced_items.push_back (MenuElem(_("Steal from ..."), sigc::mem_fun(*this, &RouteTimeAxisView::show_playlist_steal_selector)));
+	playlist_items.push_back (MenuElem (_("Advanced"), *advanced_menu));
 }
 
 void
@@ -1692,11 +1700,31 @@ RouteTimeAxisView::update_playlist_tip ()
 	set_tooltip (playlist_button, _("Playlist") + std::string(": ") + Gtkmm2ext::markup_escape_text (track()->playlist()->name()));
 }
 
-
 void
 RouteTimeAxisView::show_playlist_selector ()
 {
-	_editor.playlist_selector().set_rui(this);
+	_editor.playlist_selector().set_rui(this, PlaylistSelector::plSelect);
+	_editor.playlist_selector().redisplay();
+}
+
+void
+RouteTimeAxisView::show_playlist_copy_selector ()
+{
+	_editor.playlist_selector().set_rui(this, PlaylistSelector::plCopy);
+	_editor.playlist_selector().redisplay();
+}
+
+void
+RouteTimeAxisView::show_playlist_share_selector ()
+{
+	_editor.playlist_selector().set_rui(this, PlaylistSelector::plShare);
+	_editor.playlist_selector().redisplay();
+}
+
+void
+RouteTimeAxisView::show_playlist_steal_selector ()
+{
+	_editor.playlist_selector().set_rui(this, PlaylistSelector::plSteal);
 	_editor.playlist_selector().redisplay();
 }
 

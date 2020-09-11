@@ -128,6 +128,10 @@ PlaylistSelector::on_unmap_event (GdkEventAny* ev)
 void
 PlaylistSelector::redisplay()
 {
+	if (!rui ) {
+		return;
+	}
+
 	vector<const char*> item;
 	string str;
 

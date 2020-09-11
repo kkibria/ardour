@@ -47,8 +47,15 @@ public:
 	PlaylistSelector ();
 	~PlaylistSelector ();
 
+	enum plMode {
+		plSelect,
+		plCopy,
+		plShare,
+		plSteal
+	};
+
 	void redisplay();
-	void set_rui(RouteUI*);
+	void set_rui(RouteUI*, plMode in);
 
 protected:
 	bool on_unmap_event (GdkEventAny*);
@@ -59,6 +66,8 @@ private:
 	Gtk::ScrolledWindow scroller;
 	TrackPlaylistMap trpl_map;
 	RouteUI* rui;
+
+	plMode _mode;
 
 	sigc::connection select_connection;
 	PBD::ScopedConnectionList signal_connections;

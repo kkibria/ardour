@@ -46,6 +46,7 @@ PlaylistSelector::PlaylistSelector ()
 	: ArdourDialog (_("Playlists"))
 {
 	rui = 0;
+	_mode = plSelect;
 
 	set_name ("PlaylistSelectorWindow");
 	set_modal(false);
@@ -55,6 +56,7 @@ PlaylistSelector::PlaylistSelector ()
 	model = TreeStore::create (columns);
 	tree.set_model (model);
 	tree.append_column (_("Playlists grouped by track"), columns.text);
+	tree.set_headers_visible (false);
 
 	scroller.add (tree);
 	scroller.set_policy (POLICY_AUTOMATIC, POLICY_AUTOMATIC);
@@ -70,8 +72,10 @@ PlaylistSelector::PlaylistSelector ()
 	ok_btn->signal_clicked().connect (sigc::mem_fun(*this, &PlaylistSelector::ok_button_click));
 }
 
-void PlaylistSelector::set_rui(RouteUI* ruix)
+void PlaylistSelector::set_rui(RouteUI* ruix, plMode mode)
 {
+	_mode = mode;
+	
 	if (rui == ruix) {
 		return;
 	}
@@ -138,11 +142,7 @@ PlaylistSelector::redisplay()
 
 	boost::shared_ptr<Track> this_track = rui->track();
 
-	TreeModel::Row others = *(model->append ());
-
-	others[columns.text] = _("Other tracks");
-	boost::shared_ptr<Playlist> proxy = others[columns.playlist];
-	proxy.reset ();
+	boost::shared_ptr<Playlist> proxy;
 
 	if (this_track->playlist()) {
 		current_playlist = this_track->playlist();
@@ -167,72 +167,78 @@ PlaylistSelector::redisplay()
 		bool have_selected = false;
 		TreePath this_path;
 
-		if (tr == this_track) {
+		//make a heading for each other track, if needed
+		if (tr != this_track && _mode != plSelect) {
 			row = *(model->prepend());
-			row[columns.text] = nodename;
-			boost::shared_ptr<Playlist> proxy = row[columns.playlist];
-			proxy.reset ();
-		} else {
-			row = *(model->append (others.children()));
 			row[columns.text] = nodename;
 			boost::shared_ptr<Playlist> proxy = row[columns.playlist];
 			proxy.reset ();
 		}
 
 		/* Now insert all the playlists for this diskstream/track in a subtree */
-
 		list<boost::shared_ptr<Playlist> >* pls = x->second;
 
 		for (list<boost::shared_ptr<Playlist> >::iterator p = pls->begin(); p != pls->end(); ++p) {
 
 			TreeModel::Row child_row;
 
-			child_row = *(model->append (row.children()));
-			child_row[columns.text] = (*p)->name();
-			child_row[columns.playlist] = *p;
+			if (tr == this_track && _mode==plSelect) {
+				child_row = *(model->append());
+			} else if (tr != this_track && _mode != plSelect) {
+				child_row = *(model->append (row.children()));
+			}
+			
+			if (child_row) {
+				child_row[columns.text] = (*p)->name();
+				child_row[columns.playlist] = *p;
 
-			if (*p == this_track->playlist()) {
-				selected_row = child_row;
-				have_selected = true;
+				if (*p == this_track->playlist()) {
+					selected_row = child_row;
+					have_selected = true;
+				}
 			}
 		}
-
 		if (have_selected) {
 			tree.get_selection()->select (selected_row);
 		}
 	}
 
-	// Add unassigned (imported) playlists to the list
-	list<boost::shared_ptr<Playlist> > unassigned;
-	_session->playlists()->unassigned (unassigned);
+	if (_mode != plSelect) {
+		// Add unassigned (imported) playlists to the list
+		list<boost::shared_ptr<Playlist> > unassigned;
+		_session->playlists()->unassigned (unassigned);
 
-	TreeModel::Row row;
-	TreeModel::Row selected_row;
-	bool have_selected = false;
-	TreePath this_path;
+		if ( unassigned.begin() != unassigned.end() ) {
+		
+			TreeModel::Row row;
+			TreeModel::Row selected_row;
+			bool have_selected = false;
+			TreePath this_path;
 
-	row = *(model->append (others.children()));
-	row[columns.text] = _("Imported");
-	proxy = row[columns.playlist];
-	proxy.reset ();
+			row = *(model->append ());
+			row[columns.text] = _("Imported");
+			proxy = row[columns.playlist];
+			proxy.reset ();
 
-	for (list<boost::shared_ptr<Playlist> >::iterator p = unassigned.begin(); p != unassigned.end(); ++p) {
-		TreeModel::Row child_row;
+			for (list<boost::shared_ptr<Playlist> >::iterator p = unassigned.begin(); p != unassigned.end(); ++p) {
+				TreeModel::Row child_row;
 
-		child_row = *(model->append (row.children()));
-		child_row[columns.text] = (*p)->name();
-		child_row[columns.playlist] = *p;
+				child_row = *(model->append (row.children()));
+				child_row[columns.text] = (*p)->name();
+				child_row[columns.playlist] = *p;
 
-		if (*p == this_track->playlist()) {
-			selected_row = child_row;
-			have_selected = true;
+				if (*p == this_track->playlist()) {
+					selected_row = child_row;
+					have_selected = true;
+				}
+
+				if (have_selected) {
+					tree.get_selection()->select (selected_row);
+				}
+			}
 		}
-
-		if (have_selected) {
-			tree.get_selection()->select (selected_row);
-		}
-	}
-
+	} //if !plSelect
+	
 	show_all ();
 	select_connection = tree.get_selection()->signal_changed().connect (sigc::mem_fun(*this, &PlaylistSelector::selection_changed));
 }

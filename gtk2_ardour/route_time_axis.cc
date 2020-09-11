@@ -1528,13 +1528,6 @@ RouteTimeAxisView::paste (samplepos_t pos, const Selection& selection, PasteCont
 	return true;
 }
 
-
-struct PlaylistSorter {
-	bool operator() (boost::shared_ptr<Playlist> a, boost::shared_ptr<Playlist> b) const {
-		return a->sort_id() < b->sort_id();
-	}
-};
-
 void
 RouteTimeAxisView::build_playlist_menu ()
 {
@@ -1558,7 +1551,7 @@ RouteTimeAxisView::build_playlist_menu ()
 	vector<boost::shared_ptr<Playlist> > playlists_tr = _session->playlists()->playlists_for_track (tr);
 
 	/* sort the playlists */
-	PlaylistSorter cmp;
+	PlaylistSorterByID cmp;
 	sort (playlists_tr.begin(), playlists_tr.end(), cmp);
 
 	/* add the playlists to the menu */

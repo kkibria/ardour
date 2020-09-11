@@ -180,9 +180,13 @@ PlaylistSelector::redisplay()
 		}
 
 		/* Now insert all the playlists for this diskstream/track in a subtree */
-		list<boost::shared_ptr<Playlist> >* pls = x->second;
+		vector<boost::shared_ptr<Playlist> > pls = *(x->second);
 
-		for (list<boost::shared_ptr<Playlist> >::iterator p = pls->begin(); p != pls->end(); ++p) {
+		/* sort the playlists to match the order they appear in the track menu */
+		PlaylistSorterByID cmp;
+		sort (pls.begin(), pls.end(), cmp);
+
+		for (vector<boost::shared_ptr<Playlist> >::iterator p = pls.begin(); p != pls.end(); ++p) {
 
 			TreeModel::Row child_row;
 
@@ -272,7 +276,7 @@ PlaylistSelector::add_playlist_to_map (boost::shared_ptr<Playlist> pl)
 	TrackPlaylistMap::iterator x;
 
 	if ((x = trpl_map.find (pl->get_orig_track_id ())) == trpl_map.end()) {
-		x = trpl_map.insert (trpl_map.end(), make_pair (pl->get_orig_track_id(), new list<boost::shared_ptr<Playlist> >));
+		x = trpl_map.insert (trpl_map.end(), make_pair (pl->get_orig_track_id(), new vector<boost::shared_ptr<Playlist> >));
 	}
 
 	x->second->push_back (pl);

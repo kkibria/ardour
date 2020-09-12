@@ -61,7 +61,7 @@ public:
 	};
 
 	void redisplay();
-	void set_rui(RouteUI*, plMode in);
+	void set_tav(RouteTimeAxisView*, plMode in);
 
 protected:
 	bool on_unmap_event (GdkEventAny*);
@@ -71,7 +71,8 @@ private:
 
 	Gtk::ScrolledWindow scroller;
 	TrackPlaylistMap trpl_map;
-	RouteUI* rui;
+
+	RouteTimeAxisView* _tav;
 
 	plMode _mode;
 

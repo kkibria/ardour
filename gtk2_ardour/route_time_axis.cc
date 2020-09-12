@@ -1696,28 +1696,28 @@ RouteTimeAxisView::update_playlist_tip ()
 void
 RouteTimeAxisView::show_playlist_selector ()
 {
-	_editor.playlist_selector().set_rui(this, PlaylistSelector::plSelect);
+	_editor.playlist_selector().set_tav(this, PlaylistSelector::plSelect);
 	_editor.playlist_selector().redisplay();
 }
 
 void
 RouteTimeAxisView::show_playlist_copy_selector ()
 {
-	_editor.playlist_selector().set_rui(this, PlaylistSelector::plCopy);
+	_editor.playlist_selector().set_tav(this, PlaylistSelector::plCopy);
 	_editor.playlist_selector().redisplay();
 }
 
 void
 RouteTimeAxisView::show_playlist_share_selector ()
 {
-	_editor.playlist_selector().set_rui(this, PlaylistSelector::plShare);
+	_editor.playlist_selector().set_tav(this, PlaylistSelector::plShare);
 	_editor.playlist_selector().redisplay();
 }
 
 void
 RouteTimeAxisView::show_playlist_steal_selector ()
 {
-	_editor.playlist_selector().set_rui(this, PlaylistSelector::plSteal);
+	_editor.playlist_selector().set_tav(this, PlaylistSelector::plSteal);
 	_editor.playlist_selector().redisplay();
 }
 

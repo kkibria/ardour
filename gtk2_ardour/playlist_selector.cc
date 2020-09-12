@@ -25,11 +25,13 @@
 #include "ardour/audio_track.h"
 #include "ardour/audioplaylist.h"
 #include "ardour/midi_playlist.h"
+#include "ardour/playlist_factory.h"
 
 #include "ardour/session_playlist.h"
 
 #include <gtkmm2ext/gtk_ui.h>
 
+#include "public_editor.h"
 #include "playlist_selector.h"
 #include "route_ui.h"
 #include "gui_thread.h"
@@ -45,7 +47,7 @@ using namespace PBD;
 PlaylistSelector::PlaylistSelector ()
 	: ArdourDialog (_("Playlists"))
 {
-	rui = 0;
+	_tav = 0;
 	_mode = plSelect;
 
 	set_name ("PlaylistSelectorWindow");
@@ -66,23 +68,23 @@ PlaylistSelector::PlaylistSelector ()
 
 	get_vbox()->pack_start (scroller);
 
-	Button* close_btn = add_button (_("Close"), RESPONSE_CANCEL);
-	Button* ok_btn = add_button (_("OK"), RESPONSE_OK);
+	Button* close_btn = add_button (_("Revert"), RESPONSE_CANCEL);
+	Button* ok_btn = add_button (_("Done"), RESPONSE_OK);
 	close_btn->signal_clicked().connect (sigc::mem_fun(*this, &PlaylistSelector::close_button_click));
 	ok_btn->signal_clicked().connect (sigc::mem_fun(*this, &PlaylistSelector::ok_button_click));
 }
 
-void PlaylistSelector::set_rui(RouteUI* ruix, plMode mode)
+void PlaylistSelector::set_tav(RouteTimeAxisView* tavx, plMode mode)
 {
 	_mode = mode;
 	
-	if (rui == ruix) {
+	if (_tav == tavx) {
 		return;
 	}
 
-	rui = ruix;
+	_tav = tavx;
 
-	boost::shared_ptr<Track> this_track = rui->track();
+	boost::shared_ptr<Track> this_track = _tav->track();
 
 	if (this_track) {
 		this_track->PlaylistAdded.connect(
@@ -128,14 +130,14 @@ PlaylistSelector::on_unmap_event (GdkEventAny* ev)
 void
 PlaylistSelector::redisplay()
 {
-	if (!rui ) {
+	if (!_tav ) {
 		return;
 	}
 
 	vector<const char*> item;
 	string str;
 
-	set_title (string_compose (_("Playlist for %1"), rui->route()->name()));
+	set_title (string_compose (_("Playlist for %1"), _tav->route()->name()));
 
 	clear_map ();
 	select_connection.disconnect ();
@@ -144,7 +146,7 @@ PlaylistSelector::redisplay()
 
 	_session->playlists()->foreach (this, &PlaylistSelector::add_playlist_to_map);
 
-	boost::shared_ptr<Track> this_track = rui->track();
+	boost::shared_ptr<Track> this_track = _tav->track();
 
 	boost::shared_ptr<Playlist> proxy;
 
@@ -258,16 +260,16 @@ PlaylistSelector::add_playlist_to_map (boost::shared_ptr<Playlist> pl)
 		return;
 	}
 
-	if (!rui) {
+	if (!_tav) {
 		return;
 	}
 
-	if (rui->is_midi_track ()) {
+	if (_tav->is_midi_track ()) {
 		if (boost::dynamic_pointer_cast<MidiPlaylist> (pl) == 0) {
 			return;
 		}
 	} else {
-		assert (rui->is_audio_track ());
+		assert (_tav->is_audio_track ());
 		if (boost::dynamic_pointer_cast<AudioPlaylist> (pl) == 0) {
 			return;
 		}
@@ -291,17 +293,17 @@ PlaylistSelector::playlist_added()
 void
 PlaylistSelector::close_button_click ()
 {
-	if (rui && current_playlist) {
-		rui->track ()->use_playlist (rui->is_audio_track () ? DataType::AUDIO : DataType::MIDI, current_playlist);
+	if (_tav && current_playlist) {
+		_tav->track ()->use_playlist (_tav->is_audio_track () ? DataType::AUDIO : DataType::MIDI, current_playlist);
 	}
-	rui = 0;
+	_tav = 0;
 	hide ();
 }
 
 void
 PlaylistSelector::ok_button_click()
 {
-	rui = 0;
+	_tav = 0;
 	hide();
 }
 
@@ -318,20 +320,34 @@ PlaylistSelector::selection_changed ()
 
 	TreeModel::iterator iter = tree.get_selection()->get_selected();
 
-	if (!iter || rui == 0) {
+	if (!iter || _tav == 0) {
 		/* nothing selected */
 		return;
 	}
 
 	if ((pl = ((*iter)[columns.playlist])) != 0) {
 
-		if (rui->is_audio_track () && boost::dynamic_pointer_cast<AudioPlaylist> (pl) == 0) {
+		if (_tav->is_audio_track () && boost::dynamic_pointer_cast<AudioPlaylist> (pl) == 0) {
 			return;
 		}
-		if (rui->is_midi_track () && boost::dynamic_pointer_cast<MidiPlaylist> (pl) == 0) {
+		if (_tav->is_midi_track () && boost::dynamic_pointer_cast<MidiPlaylist> (pl) == 0) {
 			return;
 		}
 
-		rui->track ()->use_playlist (rui->is_audio_track () ? DataType::AUDIO : DataType::MIDI, pl);
+		switch (_mode) {
+			/*  @Robin:  I dont see a way to undo these playlist actions */
+			case plCopy: {
+					boost::shared_ptr<Playlist> playlist = PlaylistFactory::create (pl, string_compose ("%1.1", pl->name()));
+					/* playlist->reset_shares ();  @Robin is this needed? */
+					_tav->track ()->use_playlist (_tav->is_audio_track () ? DataType::AUDIO : DataType::MIDI, playlist);
+				} break;
+			case plShare:
+				_tav->track ()->use_playlist (_tav->is_audio_track () ? DataType::AUDIO : DataType::MIDI, pl, false);  //do not set owner
+				break;
+			case plSelect:
+			case plSteal:
+				_tav->track ()->use_playlist (_tav->is_audio_track () ? DataType::AUDIO : DataType::MIDI, pl);
+				break;
+		}
 	}
 }

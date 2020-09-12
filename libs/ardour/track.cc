@@ -642,13 +642,15 @@ update_region_visibility(boost::shared_ptr<Region> r)
 
 
 int
-Track::use_playlist (DataType dt, boost::shared_ptr<Playlist> p)
+Track::use_playlist (DataType dt, boost::shared_ptr<Playlist> p, bool set_orig)
 {
 	int ret;
 
 	if ((ret = _disk_reader->use_playlist (dt, p)) == 0) {
 		if ((ret = _disk_writer->use_playlist (dt, p)) == 0) {
-			p->set_orig_track_id (id());
+			if (set_orig) {
+				p->set_orig_track_id (id());
+			}
 		}
 	}
 

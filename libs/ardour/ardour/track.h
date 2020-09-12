@@ -158,7 +158,7 @@ public:
 	void set_align_style (AlignStyle, bool force=false);
 	void set_align_choice (AlignChoice, bool force=false);
 	void playlist_modified ();
-	int use_playlist (DataType, boost::shared_ptr<Playlist>);
+	int use_playlist (DataType, boost::shared_ptr<Playlist>, bool set_orig = true);
 	int find_and_use_playlist (DataType, PBD::ID const &);
 	int use_copy_playlist ();
 	int use_new_playlist (DataType);

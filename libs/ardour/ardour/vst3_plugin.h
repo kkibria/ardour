@@ -52,6 +52,7 @@ class LIBARDOUR_API VST3PI
 	, public Vst::IComponentHandler2
 	, public Vst::IConnectionPoint
 	, public IPlugFrame
+	, public Presonus::IContextInfoProvider3
 {
 public:
 	VST3PI (boost::shared_ptr<ARDOUR::VST3PluginModule> m, std::string unique_id);
@@ -76,6 +77,16 @@ public:
 
 	/* IPlugFrame */
 	tresult PLUGIN_API resizeView (IPlugView* view, ViewRect* newSize) SMTG_OVERRIDE;
+
+	/* IContextInfoProvider3 API */
+	tresult PLUGIN_API getContextInfoValue (int32&, FIDString);
+	tresult PLUGIN_API getContextInfoString (Vst::TChar*, int32, FIDString);
+	tresult PLUGIN_API getContextInfoValue (double&, FIDString);
+	tresult PLUGIN_API setContextInfoValue (FIDString, double);
+	tresult PLUGIN_API setContextInfoValue (FIDString, int32);
+	tresult PLUGIN_API setContextInfoString (FIDString, Vst::TChar*);
+	tresult PLUGIN_API beginEditContextInfoValue (FIDString);
+	tresult PLUGIN_API endEditContextInfoValue (FIDString);
 
 	/* GUI */
 	bool has_editor () const;
@@ -147,6 +158,8 @@ public:
 
 	Vst::ProcessContext& context () { return _context; }
 
+	void set_owner (ARDOUR::SessionObject* o);
+
 	void enable_io (std::vector<bool> const&, std::vector<bool> const&);
 
 	void process (float** ins, float** outs, uint32_t n_samples);
@@ -184,6 +197,9 @@ private:
 	bool live_midi_cc (int32_t, int16_t, Vst::CtrlNumber);
 
 	boost::shared_ptr<ARDOUR::VST3PluginModule> _module;
+
+	void subscribe_to (boost::shared_ptr<ARDOUR::AutomationControl>, FIDString);
+	PBD::ScopedConnectionList _ac_connection_list;
 
 	std::vector <Vst::IConnectionPoint*> _connections;
 
@@ -236,6 +252,8 @@ private:
 	std::vector<bool> _enabled_audio_out;
 
 	boost::optional<uint32_t> _plugin_latency;
+
+	ARDOUR::SessionObject* _owner;
 
 	int _n_inputs;
 	int _n_outputs;
@@ -300,6 +318,8 @@ public:
 
 	void add_slave (boost::shared_ptr<Plugin>, bool);
 	void remove_slave (boost::shared_ptr<Plugin>);
+
+	void set_owner (ARDOUR::SessionObject* o);
 
 	int connect_and_run (BufferSet&  bufs,
 	                     samplepos_t start, samplepos_t end, double speed,
